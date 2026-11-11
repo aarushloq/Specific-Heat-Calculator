@@ -1,0 +1,20 @@
+Model vs CoolProp 8.0.0 (acceptance is fidelity to the spec, not small error)
+test    quantity                                            model     CoolProp    dev %
+VAL-01  n-hexane liquid PR C_p                           187.7665     195.8360    -4.12
+VAL-01  n-hexane liquid PR C_v                           159.8154     151.3225    +5.61
+VAL-01  benzene liquid PR C_p                            117.8872     135.5410   -13.02
+VAL-01  benzene liquid PR C_v                             94.5909      94.5910    -0.00
+VAL-01  ethanol liquid PR C_p                            140.9096     112.1529   +25.64
+VAL-01  ethanol liquid PR C_v                            107.4919      94.1253   +14.20
+VAL-01  water liquid PR C_p                               81.1695      75.3275    +7.76
+VAL-01  water liquid PR C_v                               58.8526      74.5393   -21.04
+VAL-02  benzene gas 400 K ideal gas C_p                  113.3378     114.8434    -1.31
+VAL-02  benzene gas 400 K ideal gas C_v                  105.0233     105.6310    -0.58
+VAL-02  benzene gas 400 K Peng-Robinson C_p              114.0212     114.8434    -0.72
+VAL-02  benzene gas 400 K Peng-Robinson C_v              105.0996     105.6310    -0.50
+VAL-05  CH4/C2H6 5 bar C_p                                45.1626      45.2545    -0.20
+VAL-05  CH4/C2H6 10 bar C_p                               46.1962      46.4093    -0.46
+VAL-07  water 283.37 K c_v database route [J/kg/K]      4189.9549    4189.9035    +0.00
+VAL-07  water 301.11 K c_v database route [J/kg/K]      4125.7825    4125.6625    +0.00
+VAL-07  water 322.73 K c_v database route [J/kg/K]      4028.2643    4028.2220    +0.00
+VAL-07  water 337.90 K c_v database route [J/kg/K]      3952.3121    3952.2243    +0.00

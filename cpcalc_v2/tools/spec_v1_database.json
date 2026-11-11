@@ -1,0 +1,89 @@
+{
+ "_about": "Small curated database (spec v3 Sec. 10). Only values printed in spec v3 with a source are stored. kind: experimental = [E] evaluated tables; estimated = [R] CoolProp reference-equation values quoted in the spec; unspecified = [U] unverified; illustrative = [I]. Components with no sourced values carry identity only. Values are used only for blanks: user data always win.",
+ "components": {
+  "water": {
+   "name": "Water", "formula": "H2O", "cas": "7732-18-5", "aliases": ["h2o"], "associating": true,
+   "properties": [
+    {"key": "M", "value": 0.018015, "unit": "kg/mol", "phase": "", "T_min": null, "T_max": null, "kind": "illustrative", "source": "spec v3 Sec. 10 database format example (marked [I] there)"},
+    {"key": "cp", "value": 4181.3, "unit": "J/kg/K", "phase": "liquid", "T_min": 298.15, "T_max": 298.15, "kind": "estimated", "source": "CoolProp 8.0.0 reference equation [21], quoted in spec v3 Table 16 D5 [R]"},
+    {"key": "rho", "value": 997.05, "unit": "kg/m3", "phase": "liquid", "T_min": 298.15, "T_max": 298.15, "kind": "estimated", "source": "CoolProp 8.0.0 reference equation [21], quoted in spec v3 Table 16 D5 [R]"},
+    {"key": "alpha_V", "value": 2.5729e-4, "unit": "1/K", "phase": "liquid", "T_min": 298.15, "T_max": 298.15, "kind": "estimated", "source": "CoolProp 8.0.0 reference equation [21], quoted in spec v3 Sec. 3.6.1 [R]"},
+    {"key": "kappa_T", "value": 4.5246e-10, "unit": "1/Pa", "phase": "liquid", "T_min": 298.15, "T_max": 298.15, "kind": "estimated", "source": "CoolProp 8.0.0 reference equation [21], quoted in spec v3 Sec. 3.6.1 [R]"},
+    {"key": "cp_ig", "value": 33.6, "unit": "J/mol/K", "phase": "gas", "T_min": 298.15, "T_max": 298.15, "kind": "estimated", "source": "CoolProp 8.0.0 ideal-gas part, spec v3 Table 3 [R]"}
+   ],
+   "correlations": [], "curves": []
+  },
+  "n-dodecane": {
+   "name": "n-Dodecane", "formula": "C12H26", "cas": "112-40-3", "aliases": ["dodecane"], "associating": false,
+   "properties": [
+    {"key": "cp", "value": 2212.3, "unit": "J/kg/K", "phase": "liquid", "T_min": 298.15, "T_max": 298.15, "kind": "estimated", "source": "CoolProp 8.0.0 reference equation [21], quoted in spec v3 Table 16 D5 [R]"},
+    {"key": "rho", "value": 745.73, "unit": "kg/m3", "phase": "liquid", "T_min": 298.15, "T_max": 298.15, "kind": "estimated", "source": "CoolProp 8.0.0 reference equation [21], quoted in spec v3 Table 16 D5 [R]"},
+    {"key": "alpha_V", "value": 9.93e-4, "unit": "1/K", "phase": "liquid", "T_min": 298.15, "T_max": 298.15, "kind": "estimated", "source": "CoolProp 8.0.0 reference equation [21], quoted in spec v3 Table 16 D5 [R]"},
+    {"key": "kappa_T", "value": 9.95e-10, "unit": "1/Pa", "phase": "liquid", "T_min": 298.15, "T_max": 298.15, "kind": "estimated", "source": "CoolProp 8.0.0 reference equation [21], quoted in spec v3 Table 16 D5 [R]"}
+   ],
+   "correlations": [], "curves": []
+  },
+  "al2o3": {
+   "name": "alpha-Al2O3", "formula": "Al2O3", "cas": "1344-28-1", "aliases": ["alumina", "alpha-al2o3"], "associating": false,
+   "properties": [
+    {"key": "M", "value": 101.9612, "unit": "g/mol", "phase": "", "T_min": null, "T_max": null, "kind": "experimental", "source": "NIST Structural Ceramics Database (SRD 30) entry Z00630 [33], quoted in spec v3 D4"}
+   ],
+   "correlations": [],
+   "curves": [
+    {"curve_id": "janaf_al2o3_cp", "key": "cp", "unit": "J/mol/K", "phase": "solid", "kind": "experimental",
+     "source": "NIST-JANAF Thermochemical Tables, table Al-096 (alpha-Al2O3, Dec 1979) [31], quoted in spec v3 D4",
+     "points": [[100.0, 12.855], [200.0, 51.120], [298.15, 79.015], [300.0, 79.416], [400.0, 96.086], [500.0, 106.131]]}
+   ]
+  },
+  "cu": {
+   "name": "Copper", "formula": "Cu", "cas": "7440-50-8", "aliases": ["copper"], "associating": false,
+   "properties": [
+    {"key": "theta_D", "value": 343.0, "unit": "K", "phase": "solid", "T_min": null, "T_max": null, "kind": "unspecified", "source": "spec v3 Sec. 3.4.2, value carried from v2 and marked [U] (unverified; cite Kittel [20] before use)"},
+    {"key": "n_atoms", "value": 1.0, "unit": "-", "phase": "solid", "T_min": null, "T_max": null, "kind": "derived", "source": "Cu is an element: one atom per formula unit"}
+   ],
+   "correlations": [],
+   "curves": [
+    {"curve_id": "janaf_cu_cp", "key": "cp", "unit": "J/mol/K", "phase": "solid", "kind": "experimental",
+     "source": "NIST-JANAF Thermochemical Tables, table Cu-001 (Jun 1977) [31], quoted in spec v3 Sec. 3.4.2 / VAL-03",
+     "points": [[100.0, 16.010], [200.0, 22.631], [298.15, 24.442], [400.0, 25.318], [500.0, 25.912]]}
+   ]
+  },
+  "benzene": {
+   "name": "Benzene", "formula": "C6H6", "cas": "71-43-2", "aliases": [], "associating": false,
+   "properties": [
+    {"key": "cp", "value": 135.5, "unit": "J/mol/K", "phase": "liquid", "T_min": 298.15, "T_max": 298.15, "kind": "estimated", "source": "CoolProp 8.0.0 reference equation [21], spec v3 Table 3 [R]"},
+    {"key": "cp_ig", "value": 81.5, "unit": "J/mol/K", "phase": "gas", "T_min": 298.15, "T_max": 298.15, "kind": "estimated", "source": "CoolProp 8.0.0 ideal-gas part, spec v3 Table 3 [R]"},
+    {"key": "cp_ig", "value": 113.34, "unit": "J/mol/K", "phase": "gas", "T_min": 400.0, "T_max": 400.0, "kind": "estimated", "source": "CoolProp 8.0.0 ideal-gas part, spec v3 Table 16 D7 [R]"}
+   ],
+   "correlations": [], "curves": []
+  },
+  "n-hexane": {
+   "name": "n-Hexane", "formula": "C6H14", "cas": "110-54-3", "aliases": ["hexane"], "associating": false,
+   "properties": [
+    {"key": "cp", "value": 195.8, "unit": "J/mol/K", "phase": "liquid", "T_min": 298.15, "T_max": 298.15, "kind": "estimated", "source": "CoolProp 8.0.0 reference equation [21], spec v3 Table 3 [R]"},
+    {"key": "cp_ig", "value": 142.8, "unit": "J/mol/K", "phase": "gas", "T_min": 298.15, "T_max": 298.15, "kind": "estimated", "source": "CoolProp 8.0.0 ideal-gas part, spec v3 Table 3 [R]"}
+   ],
+   "correlations": [], "curves": []
+  },
+  "ethanol": {
+   "name": "Ethanol", "formula": "C2H6O", "cas": "64-17-5", "aliases": [], "associating": true,
+   "properties": [
+    {"key": "cp", "value": 112.2, "unit": "J/mol/K", "phase": "liquid", "T_min": 298.15, "T_max": 298.15, "kind": "estimated", "source": "CoolProp 8.0.0 reference equation [21], spec v3 Table 3 [R]"},
+    {"key": "cp_ig", "value": 65.2, "unit": "J/mol/K", "phase": "gas", "T_min": 298.15, "T_max": 298.15, "kind": "estimated", "source": "CoolProp 8.0.0 ideal-gas part, spec v3 Table 3 [R]"}
+   ],
+   "correlations": [], "curves": []
+  },
+  "n-heptane": {
+   "name": "n-Heptane", "formula": "C7H16", "cas": "142-82-5", "aliases": ["heptane"], "associating": false,
+   "properties": [], "correlations": [], "curves": []
+  },
+  "ethylene glycol": {
+   "name": "Ethylene glycol", "formula": "C2H6O2", "cas": "107-21-1", "aliases": ["eg", "meg", "ethylene_glycol"], "associating": true,
+   "properties": [], "correlations": [], "curves": []
+  },
+  "sio2": {
+   "name": "Silica", "formula": "SiO2", "cas": "7631-86-9", "aliases": ["silica"], "associating": false,
+   "properties": [], "correlations": [], "curves": []
+  }
+ }
+}
