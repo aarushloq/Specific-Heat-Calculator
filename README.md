@@ -1,186 +1,452 @@
-# cpcalc: apparent heat capacity of fluids, mixtures and multiphase samples
+# CpCalc — Apparent Specific Heat Calculator
 
-**cpcalc** calculates the *apparent* specific heat capacities **c_p** (constant pressure) and **c_v** (constant volume) of a sample. The sample can be a pure liquid, solid or gas, a mixture, or several phases together: a nanofluid, an emulsion, a slurry. It was written for the CL 202 Topic 5 course project.
+**Calculate the apparent specific heat capacities of pure substances, mixtures, and multiphase systems such as nanofluids, emulsions, and slurries.**
 
-You describe the sample in a web interface (or an Excel workbook), and the program:
+`cpcalc` estimates the specific heat capacity at constant pressure (cₚ) and constant volume (cᵥ) of a sample, showing the calculation procedure and thermodynamic reasoning behind every result.
 
-1. finds c_p of every phase from data, or from a model when data are missing;
-2. converts to c_v with the thermodynamic identity c_p − c_v = T α_V² / (ρ κ_T);
-3. combines the phases into one apparent c_p and c_v;
-4. shows every step with its equation, the numbers substituted and the result, and tells you how reliable the result is.
+Built with Python and Streamlit as part of the **CL 202 Topic 5 course project**.
 
-![The System tab](docs/1_system.png)
+**Live app:** _Add your Streamlit link here_
 
-## Quick start
+![System configuration](docs/1_system.png)
 
-You need Python 3.10 or newer. In a terminal, inside the project folder:
+---
+
+## Table of Contents
+
+1. [What is this project about?](#what-is-this-project-about)
+2. [Key concepts](#key-concepts)
+3. [How CpCalc works](#how-cpcalc-works)
+4. [Thermodynamic models](#thermodynamic-models)
+5. [The application](#the-application)
+6. [Command-line interface](#command-line-interface)
+7. [Database](#database)
+8. [Reliability and limitations](#reliability-and-limitations)
+9. [Testing and validation](#testing-and-validation)
+10. [Technologies and dependencies](#technologies-and-dependencies)
+11. [Project structure](#project-structure)
+12. [Version history](#version-history)
+
+---
+
+## 1. What is this project about?
+
+**Specific heat capacity** tells us how much energy is required to raise the temperature of 1 kg of a material by 1 K. It is an important property in heating, cooling, and heat-exchanger calculations.
+
+Finding the specific heat of a pure substance such as water is straightforward. Real samples, however, can be more complicated:
+
+- A pure liquid, solid, or gas.
+- A mixture, such as ethanol and water.
+- Multiple phases together, such as solid particles suspended in a liquid (nanofluid or slurry), or droplets of one liquid dispersed in another (emulsion).
+
+For these systems, a single tabulated value may not be sufficient. CpCalc calculates the apparent specific heat capacity using the properties of the individual phases.
+
+**Given the temperature, pressure, and composition, CpCalc:**
+
+1. Finds the cₚ of each phase using database values or a suitable thermodynamic model.
+2. Calculates cᵥ using a thermodynamic identity.
+3. Combines the phases to obtain the apparent cₚ and cᵥ of the complete sample.
+4. Displays the procedure, equations, substituted values, results, assumptions, and reliability status.
+
+The objective is not just to produce a number, but to make the thermodynamic reasoning behind it **transparent and traceable**.
+
+---
+
+## 2. Key concepts
+
+| Term | Meaning |
+|---|---|
+| **cₚ** | Specific heat capacity at constant pressure. |
+| **cᵥ** | Specific heat capacity at constant volume. |
+| **Apparent specific heat** | Effective specific heat capacity of an entire mixture or multiphase sample, treated as one material. |
+| **Phase** | A uniform part of a sample, such as a liquid, solid, or gas. |
+| **Mass fraction (w)** | Mass of a phase divided by the total mass of the sample. |
+| **αᵥ** | Volumetric thermal expansion coefficient. |
+| **κₜ** | Isothermal compressibility. |
+| **ρ** | Density. |
+
+### Why are cₚ and cᵥ different?
+
+At constant pressure, a heated material can expand and perform work on its surroundings. Therefore, additional energy is required.
+
+At constant volume, expansion is restricted, so this additional work does not occur.
+
+Consequently, cₚ is generally greater than or equal to cᵥ. The difference is significant for gases and relatively small for most liquids and solids.
+
+---
+
+## 3. How CpCalc works
+
+### 3.1 Converting cₚ to cᵥ
+
+The two specific heat capacities are related by the thermodynamic identity:
+
+**cₚ − cᵥ = T αᵥ² / (ρ κₜ)**
+
+Rearranging to calculate cᵥ:
+
+**cᵥ = cₚ − T αᵥ² / (ρ κₜ)**
+
+Where:
+
+- T = absolute temperature (K)
+- αᵥ = volumetric thermal expansion coefficient
+- ρ = density
+- κₜ = isothermal compressibility
+
+These properties are obtained from the database, user-provided values, or the selected thermodynamic model.
+
+### 3.2 Combining multiple phases
+
+For cₚ, the individual phases are combined using a **mass-weighted average**:
+
+**cₚ,app = Σᵢ wᵢ cₚ,ᵢ**
+
+Here, wᵢ represents the mass fraction of phase i.
+
+For cᵥ, a simple mass-weighted average is not used. Individual phases cannot independently remain at constant volume when the entire sample is held at constant volume.
+
+Instead, the cᵥ of the complete sample is calculated using the thermodynamic identity above and the properties of the overall sample.
+
+### 3.3 Calculation workflow
+
+```text
+             Define the sample
+                (T, P, phases)
+                      |
+                      v
+           Calculate cₚ of each phase
+                      |
+             +--------+--------+
+             |        |        |
+           Liquid   Solid     Gas
+             |        |        |
+            Data   Data/Debye  PR/Ideal gas
+             |        |        |
+             +--------+--------+
+                      |
+                      v
+           Calculate cᵥ of phases
+                      |
+                      v
+          Combine individual phases
+                      |
+                      v
+              Apparent cₚ and cᵥ
+                      |
+                      v
+             Results, assumptions,
+               and reliability
+```
+
+---
+
+## 4. Thermodynamic models
+
+The thermodynamic models are implemented directly in the calculation engine rather than relying on separate thermodynamic-model libraries.
+
+| Model | Application | Implementation |
+|---|---|---|
+| **Peng–Robinson Equation of State** | Gases and optionally liquids. Calculates cₚ, cᵥ, density, αᵥ, and κₜ using departure functions. | `pure.py` |
+| **Debye Model** | Estimates the heat capacity of solids using the Debye temperature (θD). | `pure.py` |
+| **Ideal Mixing** | Mass-weighted average of components, assuming no additional heat effect on mixing (cₚᴱ = 0). | `mixtures.py` |
+| **Margules Model** | Binary liquid mixtures. Uses excess Gibbs energy with parameters A, B, and D to calculate excess enthalpy and excess heat capacity. | `mixtures.py` |
+| **NRTL Model** | Binary liquid mixtures. Uses local-composition excess Gibbs energy with τ₁₂, τ₂₁, and α. Excess enthalpy and heat capacity are obtained through temperature differentiation. | `mixtures.py` |
+| **Peng–Robinson Mixing Rules** | Gas mixtures using pure-component constants and binary interaction parameters (kᵢⱼ). | `mixtures.py` |
+
+The **Theory** tab explains the equations, assumptions, applicability, and required inputs for each model.
+
+### Why do mixtures need special models?
+
+When two liquids are mixed, their resulting heat capacity is generally not just the weighted average of the individual components.
+
+The difference is called the **excess heat capacity (cₚᴱ)**.
+
+- Ideal mixing assumes cₚᴱ = 0.
+- Margules and NRTL account for non-ideal mixing effects.
+
+For example, ethanol and water exhibit significant non-ideal behaviour.
+
+---
+
+## 5. The application
+
+![System configuration](docs/1_system.png)
+
+The application contains five main tabs.
+
+| Tab | Function |
+|---|---|
+| **1. System** | Set temperature and pressure, select cₚ, cᵥ, or both, and define phases, substances, amounts, and mixtures. Configure optional temperature, phase-amount, or composition sweeps. |
+| **2. Data** | Inspect required properties, their sources, and availability. Override database values with custom inputs or provide temperature-dependent property curves. |
+| **3. Results** | View apparent cₚ and cᵥ, phase-wise results, warnings, assumptions, calculation status, sweep charts, and downloadable reports. |
+| **4. Calculation Sheet** | Follow the calculation route for each phase, including equations, substituted values, and intermediate results. |
+| **5. Theory** | Explore 14 guided pages covering thermodynamic principles, models, equations, model selection, and symbols. |
+
+### Additional features
+
+- **Predefined examples:** 13 ready-to-run thermodynamic systems.
+- **Excel case management:** Save and restore calculation setups using `.xlsx` workbooks.
+- **Blank templates:** Generate Excel templates with predefined dropdown lists.
+- **Custom compounds:** Add compounds manually or look them up using the `thermo` library.
+- **Database browser:** Search the built-in database of 192 compounds.
+- **Advanced model parameters:** Enter custom NRTL, Margules, and Peng–Robinson binary interaction parameters.
+
+### Advanced mixture parameters
+
+The Advanced section allows users to enter mixture-model parameters directly.
+
+For example, consider an **ethanol (1) + water (2)** mixture using NRTL, with:
+
+**τᵢⱼ = Aᵢⱼ / T**
+
+| Parameter | Value |
+|---|---:|
+| A₁₂ (ethanol → water) | 3.17 K |
+| A₂₁ (water → ethanol) | 523.84 K |
+| α | 0.30 |
+| All a and e parameters | 0 |
+
+At 298.15 K, the application evaluates and displays τ, G, and the infinite-dilution activity coefficients as an input check:
+
+**γ₁∞ = 5.86  γ₂∞ = 2.85**
+
+![Advanced mixture parameters](docs/6_advanced.png)
+
+### Quick start
+
+Requirements: Python 3.10 or later.
+
+Clone the repository:
 
 ```bash
-python -m venv venv                  # 1. create a private environment (once)
-venv\Scripts\activate                # 2. activate it   (Mac/Linux: source venv/bin/activate)
-pip install -r requirements.txt      # 3. install the libraries (once)
-python -m cpcalc ui                  # 4. start the app; it opens in your browser
+git clone https://github.com/aarushloq/Specific-Heat-Calculator.git
+cd Specific-Heat-Calculator
 ```
 
-The next time, only steps 2 and 4 are needed. **[SETUP.md](SETUP.md)** explains every step for Windows, Mac and Linux, what each command does, how to deploy the app online, and what to do when something goes wrong.
+Create and activate a virtual environment:
 
-## Using the web interface
+**Windows:**
 
-The app has five tabs and a sidebar.
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
 
-| Tab | What you do there |
+**macOS / Linux:**
+
+```bash
+python -m venv venv
+source venv/bin/activate
+```
+
+Install the dependencies and launch the application:
+
+```bash
+pip install -r requirements.txt
+python -m cpcalc ui
+```
+
+The application opens at:
+
+```text
+http://localhost:8501
+```
+
+For detailed installation instructions and troubleshooting, see [SETUP.md](SETUP.md).
+
+---
+
+## 6. Command-line interface
+
+The calculation engine can also be used without launching the web interface.
+
+| Operation | Command |
 |---|---|
-| **1 System** | Set temperature and pressure, choose c_p, c_v or both, and describe the **phases** (state, substance, amount). Define **mixtures** (components, fractions, model). Optionally set a sweep over temperature, phase amount or composition. |
-| **2 Data** | See every property the calculation needs at your temperature, where it comes from, and its status. Type your own number in the **your value** column: *it always wins over the database*. Add your own (T, value) curves. |
-| **3 Results** | c_p,app and c_v,app, the phase table, warnings, assumptions, the status, a sweep chart, and downloads (HTML calculation sheet, text, JSON). |
-| **4 Calculation sheet** | The route taken for each phase and every step with its equation, typeset in LaTeX. |
-| **5 Theory** | 14 short pages that explain the method from the start: a flow diagram, then c_p to c_v, liquids and solids, gases, mixtures (excess functions, Margules, NRTL, k_ij), combining phases, data and status, a model chooser and a symbol table. |
+| Launch the web interface | `python -m cpcalc ui` |
+| List predefined examples | `python -m cpcalc examples` |
+| Run one example with calculations | `python -m cpcalc example D3 --explain` |
+| Run all examples | `python -m cpcalc example all` |
+| Run a saved workbook | `python -m cpcalc run my_case.xlsx --explain --html sheet.html` |
+| Generate an Excel template | `python -m cpcalc template --out my_case.xlsx` |
+| Run the test suite | `python -m cpcalc test` |
 
-**Sidebar**
+An example can also be opened directly in the browser:
 
-- **Start from an example**: 13 ready-made cases (`python -m cpcalc examples` lists them).
-- **Save / open a case (Excel)**: *Download this case* saves everything in tabs 1 and 2 as an `.xlsx` workbook; *Open a saved case* restores it; *Download a blank template* gives an empty workbook with drop-down lists. Use it to continue later, share a setup, or edit many values in Excel.
-- **➕ Add a compound**: for a compound that is not in the lists. *Find in thermo* looks it up by name, formula or CAS number and adds its data with sources. *Add as my own* adds the name and you type its data in tab 2.
-- **Browse the database**: search the 192 built-in compounds.
+```text
+http://localhost:8501/?example=D6
+```
 
-### Typing your own model parameters (Advanced)
+---
 
-In tab 1, below the mixtures, the **Advanced** section lets you type the parameters of a mixture model yourself: choose the mixture, choose **NRTL**, **Margules** or **Peng-Robinson k_ij**, fill the boxes and press **Apply**. The values go into the pair-parameter table (which you can still edit), and the mixture's model is set for you.
+## 7. Database
 
-Example: ethanol (1) + water (2) with NRTL parameters given as τ = A/T, with A₁₂ = 3.17 K, A₂₁ = 523.84 K and α = 0.30:
+The built-in database contains **192 compounds**, with temperature-dependent data wherever available.
 
-| Box | Value |
+It is generated using `tools/build_database.py`.
+
+| Data category | Coverage |
 |---|---|
-| alpha | 0.30 |
-| b_12 (ethanol → water) | 3.17 |
-| b_21 (water → ethanol) | 523.84 |
-| all a and e boxes | 0 |
+| **CoolProp reference fluids** | About 130 fluids, including liquid cₚ, density, αᵥ, κₜ, ideal-gas cₚ, and critical properties. |
+| **Additional liquids** | About 37 compounds from `thermo` / `chemicals` data methods, including alcohols, glycols, glycerol, acids, and solvents. |
+| **Particle solids** | 24 solids, including oxides, metals, and SiC, with heat-capacity curves and selected density and thermodynamic properties. |
+| **Specific reference values** | NIST-JANAF α-Al₂O₃ curve and θD(Cu) = 343 K (marked unverified). |
 
-The panel then prints τ, G and the infinite-dilution activity coefficients as a check of your inputs (here γ₁^∞ = 5.86 and γ₂^∞ = 2.85 at 298.15 K). Values for a single compound (molar mass, density, c_p, T_c, ...) are typed in tab 2 in the *your value* column.
+**Data sources:** CoolProp, NIST-JANAF, NIST WebBook, Zábranský, DIPPR/Perry, VDI, and CRC.
 
-![The Advanced section](docs/6_advanced.png)
+Every database record includes its source and evidence type.
 
-## Command line
+> **Important:** Property data are never extrapolated beyond their supported temperature range. If a requested condition falls outside the available range, the calculation stops and reports the limitation.
 
-Run these from the project folder with the environment active.
+---
 
-| What | Command |
+## 8. Reliability and limitations
+
+### Reliability levels
+
+| Level | Meaning |
 |---|---|
-| Web interface | `python -m cpcalc ui` |
-| List the examples | `python -m cpcalc examples` |
-| Run one example | `python -m cpcalc example D3 --explain` |
-| Run every example | `python -m cpcalc example all` |
-| Run your workbook | `python -m cpcalc run my_case.xlsx --explain --html sheet.html` |
-| Make an Excel template | `python -m cpcalc template --out my_case.xlsx` |
-| Run all tests | `python -m cpcalc test` |
+| **Experimental** | Evaluated property data from sources such as CoolProp reference equations, JANAF, Zábranský, DIPPR, and CRC. |
+| **Estimated** | Values obtained using estimation methods. |
+| **Illustrative** | Placeholder values intended only for demonstration. |
 
-In the browser, `http://localhost:8501/?example=D6` opens that example directly.
+The reliability status of a calculation is determined by its **weakest input**.
 
-## How it works
+Assumptions are reported explicitly and can lower the reliability status. Examples include:
 
-```
-describe the sample  ->  c_p of every phase  ->  c_v of every phase  ->  combine the phases  ->  result + status
- (T, P, phases)           liquid/solid: data (solid: Debye)             c_p: mass average
-                          gas: Peng-Robinson / ideal gas                c_v: whole-sample identity
-                          mixture: ideal + excess function
-```
+- cₚᴱ = 0 for ideal mixtures.
+- Vᴱ = 0 for mixture density.
+- Assumed αᵥ and κₜ values.
+- kᵢⱼ = 0 when binary interaction parameters are left blank.
 
-The models are **equations written in the code**, not separate libraries:
+### Model limitations
 
-| Model | What it does here | Where |
-|---|---|---|
-| **Peng-Robinson** equation of state | departure functions for gases (and liquids if you choose it): C_p, C_v, density, α_V, κ_T | `pure.py` |
-| **Debye** model | C_v of a solid from its Debye temperature θ_D | `pure.py` |
-| **Ideal mixing** | mass-weighted average of the components (C_p^E = 0) | `mixtures.py` |
-| **Margules** | excess Gibbs energy of a two-component liquid with three constants A, B, D, giving H^E and C_p^E | `mixtures.py` |
-| **NRTL** | local-composition excess Gibbs energy with τ₁₂, τ₂₁ and α; H^E and C_p^E by differentiating with temperature | `mixtures.py` |
-| **Peng-Robinson mixing, k_ij** | gas mixtures from the pure-gas constants and a binary interaction parameter | `mixtures.py` |
+1. **Liquids:** Database data are used by default. Peng–Robinson is available when explicitly selected, since its liquid caloric errors can reach approximately 26%.
+2. **Solids:** Database data are preferred, with the Debye model used as a fallback where appropriate.
+3. **Gases:** Peng–Robinson is preferred, with the ideal-gas model available as a fallback.
+4. **Pressure:** Liquid database values are based on 1 atm data. A warning is displayed above 6 bar.
+5. **Mixtures:** NRTL and Margules support two components only. Gas mixtures can contain more components.
+6. **NRTL parameters:** Parameters fitted to vapour–liquid equilibrium data may predict activity coefficients well but produce inaccurate heat-capacity corrections after temperature differentiation. Parameters fitted to excess enthalpy or excess heat-capacity data are preferable.
 
-The Theory tab explains each of them with its equations, when it applies and where to type its inputs.
+**Not currently included:**
 
-## Libraries
+- Measured excess volume and excess enthalpy represented as Redlich–Kister series.
+- Pressure sweeps.
+- Extrapolation of property data beyond supported ranges.
 
-| Library | Used for | Needed? |
-|---|---|---|
-| **NumPy** | arrays and numerical work | yes |
-| **SciPy** | the numerical integral of the Debye model (`scipy.integrate.quad`) | yes |
-| **openpyxl** | reading and writing the Excel workbooks | yes |
-| **pandas** | the editable tables in the web interface | yes (interface) |
-| **Streamlit** (≥ 1.51) | the web interface | yes (interface) |
-| **thermo** (with its companion **chemicals**) | *Find in thermo*: looks a compound up by name, formula or CAS number and gets T_c, P_c, ω, boiling point, M and so on | optional |
-| **pytest**, **sympy** | the tests | development |
-| **CoolProp** | accurate fluid properties, used to build `database.json` and to validate the results | development |
+---
 
-The calculation engine itself (`cpcalc/engine.py` and the modules it imports) needs only NumPy and SciPy.
+## 9. Testing and validation
 
-## Project layout
+The project includes automated tests covering the calculation engine, thermodynamic consistency, predefined examples, interface, workbook operations, and model validation.
 
-```
-cpcalc/
-  engine.py        the calculation: run_case() does everything
-  pure.py          pure-phase models: Peng-Robinson, Debye, ideal gas
-  mixtures.py      fraction conversions, ideal mixing, Margules, NRTL, k_ij mixing
-  sample.py        combining phases into the whole sample
-  properties.py    finds each number: your value > your curve > database
-  database.py      loads data/database.json (192 compounds)
-  lookup.py        "Find in thermo"
-  units.py         the only place where units are converted
-  workbook.py      Excel / CSV  <->  case
-  report.py        text and HTML calculation sheet     latex.py   LaTeX helpers
-  theory.py        the Theory pages                     examples.py   the 13 examples
-  app.py           the Streamlit web interface          cli.py     command line
-  constants.py     property list, units, messages       errors.py  error handling
-  data/database.json
-docs/              screenshots
-tests/             engine, consistency, examples, interface and I/O, V3 additions
-validate/          comparison with CoolProp (error_table.txt)
-tools/             build_database.py (rebuilds the database)
-streamlit_app.py   launcher used for online deployment
-```
-
-## Database (192 compounds, temperature-dependent)
-
-Built by `tools/build_database.py`. Every record names its source and kind.
-
-- **About 130 fluids from CoolProp reference equations of state.** For each: liquid c_p, ρ, α_V and κ_T at 1 atm from the triple point to the normal boiling point; ideal-gas C_p; T_c, P_c, ω and M.
-- **About 37 extra liquids from thermo/chemicals data methods** (alcohols, glycols, glycerol, acids, solvents; Zábranský, DIPPR/Perry, VDI and CRC). κ_T for these comes from the COSTALD estimate and is labelled *estimated*.
-- **24 particle solids** (oxides, metals, SiC and others): c_p curves from NIST-JANAF, the NIST WebBook, Perry or CRC; density from CRC; α_V and κ_T near room temperature for Al2O3, Cu, Ag, Au, Al, Fe, Ni and Si.
-- **Spec values**: the NIST-JANAF α-Al2O3 curve, and θ_D(Cu) = 343 K (marked unverified).
-
-Data are never extrapolated. Outside a range the run stops and says which range exists, for example "water boils at 373.12 K at 1 atm".
-
-## Tests
+Install the development dependencies:
 
 ```bash
 pip install -r requirements-dev.txt
+```
+
+Run the test suite:
+
+```bash
 python -m cpcalc test
 ```
 
-| Suite | Tests | Covers |
-|---|---|---|
-| Engine | 25 | units, lookup order, ranges, fractions, mixture bases, errors, warnings, status |
-| Consistency | 18 | the spec identities and limits |
-| Examples | 25 | every example, with the spec targets for D1–D9 |
-| Interface and I/O | 21 | workbook round trips, reports, command line, database integrity, the web app |
-| V3 additions | 11 | the NRTL check values, the equations printed on the theory pages, the Advanced section, the save/open buttons |
-| Validation | 32 | comparison with CoolProp; skipped if CoolProp is not installed |
+### Test coverage
 
-## Design choices and limits
+| Test suite | Tests | Coverage |
+|---|---:|---|
+| Engine | 25 | Units, property lookup, ranges, fractions, mixture bases, errors, warnings, and status. |
+| Consistency | 18 | Thermodynamic identities and limiting cases. |
+| Examples | 25 | Predefined examples and specification targets for D1–D9. |
+| Interface and I/O | 21 | Workbook operations, reports, CLI, database integrity, and web application. |
+| V3 additions | 11 | NRTL check values, Theory equations, Advanced section, and save/open. |
+| Validation | 32 | Comparison with CoolProp. Skipped if CoolProp is not installed. |
 
-- **Evidence kinds.** Evaluated data (CoolProp reference equations, JANAF, Zábranský, DIPPR, CRC) count as *experimental*, so a run on database data can be "calculated". Estimation methods count as *estimated*, and placeholders as *illustrative*. A result is only as strong as its weakest input.
-- **Assumptions are always listed and lower the status.** Examples: C_p^E = 0 for an ideal mixture, V^E = 0 for the mixture density, α_V and κ_T, k_ij = 0 when blank.
-- **Method order when set to auto:** liquid: data only (Peng-Robinson only if you choose it, because its liquid caloric errors reach about 26 %); solid: data, then Debye; gas: Peng-Robinson, then ideal gas.
-- **Liquids at another pressure** use the 1 atm database data; a note is shown above 6 bar.
-- **Mixture models are for two components** (NRTL, Margules). Gas mixtures can have more.
-- **NRTL parameters fitted to vapour-liquid equilibrium** describe the activity coefficients well, but the heat-capacity correction comes from their temperature derivative and can be poor. Prefer parameters fitted to H^E or C_p^E data.
-- **Not included:** the measured V^E and H^E of a mixture as Redlich-Kister series, pressure sweeps, extrapolation of data.
+---
 
-## Deploying online
+## 10. Technologies and dependencies
 
-The app can be hosted free on Streamlit Community Cloud so that anyone can use it from a link without installing anything. See the last section of [SETUP.md](SETUP.md).
+| Library | Purpose |
+|---|---|
+| **Python** | Core implementation |
+| **NumPy** | Arrays and numerical computations |
+| **SciPy** | Numerical integration for the Debye model |
+| **Pandas** | Editable tables and data handling in the interface |
+| **OpenPyXL** | Excel workbook import and export |
+| **Streamlit** | Interactive web application |
+| **thermo / chemicals** | External compound lookup |
+| **pytest / sympy** | Development and testing |
+| **CoolProp** | Database generation and validation |
 
-## Version history
+The calculation engine itself (`cpcalc/engine.py` and its imported modules) requires only **NumPy and SciPy**.
 
-- **V3**: Advanced section to type NRTL, Margules and k_ij parameters; clearer *Save / open a case* box with a blank template; *Add a compound* highlighted; Theory rewritten as a guided flow (14 pages with a diagram, separate Margules, NRTL and k_ij pages, model chooser and symbol table); README and SETUP guide. The calculations themselves are unchanged (only the version number and a display helper for the NRTL panel were added).
-- **V2**: web interface, database of 192 compounds with "add your own", calculation sheet in LaTeX, theory pages; a smaller engine and workbook (six sheets) than V1.
-- **V1**: the engine and Excel workbook that follow the course specification (Eqs. 1–23).
+---
+
+## 11. Project structure
+
+```text
+Specific-Heat-Calculator/
+│
+├── streamlit_app.py
+├── requirements.txt
+├── requirements-dev.txt
+├── README.md
+├── SETUP.md
+│
+├── cpcalc/
+│   ├── engine.py        # Main calculation engine
+│   ├── pure.py          # Peng–Robinson, Debye, ideal gas
+│   ├── mixtures.py      # Ideal, Margules, NRTL, PR mixing
+│   ├── sample.py        # Sample and phase definitions
+│   ├── properties.py    # Property retrieval
+│   ├── database.py      # Database access
+│   ├── lookup.py        # External compound lookup
+│   ├── units.py         # Unit conversion
+│   ├── workbook.py      # Excel import/export
+│   ├── report.py        # Reports
+│   ├── latex.py         # LaTeX calculation sheets
+│   ├── theory.py        # Theory tab content
+│   ├── examples.py      # Predefined examples
+│   ├── app.py           # Streamlit interface
+│   ├── cli.py           # Command-line interface
+│   ├── constants.py
+│   ├── errors.py
+│   └── data/
+│       └── database.json
+│
+├── docs/                # Screenshots
+├── tests/
+├── validate/
+└── tools/
+    └── build_database.py
+```
+
+---
+
+## 12. Version history
+
+### V3
+
+- Added the Advanced section for entering NRTL, Margules, and Peng–Robinson kᵢⱼ parameters.
+- Improved Excel save/open functionality and added a blank template.
+- Reworked the Theory section into 14 guided pages, including a model chooser, symbol table, and separate pages for Margules, NRTL, and kᵢⱼ.
+- Improved the README and setup documentation.
+- Calculations unchanged, apart from the version number and an NRTL display helper.
+
+### V2
+
+- Introduced the Streamlit interface.
+- Added the 192-compound database and custom compound support.
+- Added LaTeX calculation sheets and Theory pages.
+- Simplified the engine and workbook compared with V1.
+
+### V1
+
+- Initial calculation engine and Excel workbook following the course specification (Equations 1–23).
+
+---
+
+## Acknowledgements
+
+Developed as a computational thermodynamics project for **CL 202**, focusing on estimating apparent specific heat capacities of fluids, mixtures, and multiphase systems.
